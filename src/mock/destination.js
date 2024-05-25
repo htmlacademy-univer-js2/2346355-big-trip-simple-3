@@ -5,7 +5,7 @@ export const generateDestination = () => (
     name: 'Chamonix',
     pictures: [
       {
-        src: 'http://picsum.photos/300/200?r=0.0762563005163317',
+        src: 'img/photos/1.jpg',
         description: 'Chamonix parliament building'
       }
     ]

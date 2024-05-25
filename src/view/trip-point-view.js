@@ -52,23 +52,26 @@ const createTripPointTemplate = (point) => {
 };
 
 export default class TripPointView {
+  #point = null;
+  #element = null;
+
   constructor(point) {
-    this.point = point;
+    this.#point = point;
   }
 
-  getTemplate() {
-    return createTripPointTemplate(this.point);
+  get #template() {
+    return createTripPointTemplate(this.#point);
   }
 
-  getElement() {
-    if (!this.element) {
-      this.element = createElement(this.getTemplate());
+  get element() {
+    if (!this.#element) {
+      this.#element = createElement(this.#template);
     }
 
-    return this.element;
+    return this.#element;
   }
 
   removeElement() {
-    this.element = null;
+    this.#element = null;
   }
 }
