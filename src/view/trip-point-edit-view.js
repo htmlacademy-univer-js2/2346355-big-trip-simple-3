@@ -3,6 +3,9 @@ import { POINT_TYPES } from '../const.js';
 import { humanizePointEditorDueDate } from '../utils/point.js';
 import { generateOffer } from '../mock/offer.js';
 import { getDestination } from '../mock/destination.js';
+import flatpickr from 'flatpickr';
+
+import 'flatpickr/dist/flatpickr.min.css';
 
 const BLANK_POINT = {
   basePrice: 0,
@@ -119,10 +122,25 @@ const createTripPointEditorTemplate = (point) => {
 };
 
 export default class TripPointEditView extends AbstractStatefulView {
+  #fromDatepicker = null;
+  #toDatepicker = null;
+
   constructor(point = BLANK_POINT) {
     super();
     this._state = TripPointEditView.parsePointToState(point);
     this.#setInnerHandlers();
+  }
+
+  removeElement() {
+    super.removeElement();
+    if (this.#fromDatepicker) {
+      this.#fromDatepicker.destroy();
+      this.#fromDatepicker = null;
+    }
+    if (this.#toDatepicker) {
+      this.#toDatepicker.destroy();
+      this.#toDatepicker = null;
+    }
   }
 
   get template() {
@@ -160,7 +178,6 @@ export default class TripPointEditView extends AbstractStatefulView {
       isOffers: newOffers,
     });
   };
-  // TODO: изменение даты
 
   #offersChangedHandler = (evt) => {
     const offerId = parseInt(evt.target.dataset.offerId, 10);
@@ -204,6 +221,49 @@ export default class TripPointEditView extends AbstractStatefulView {
     this._callback.closeClick();
   };
 
+  #fromDateChangeHandler = ([userDate]) => {
+    if (userDate) {
+      this._setState({
+        dateFrom: userDate.toISOString(),
+      });
+      this.#toDatepicker.set('minDate', userDate);
+    }
+  };
+
+
+  #toDateChangeHandler = ([userDate]) => {
+    if (userDate) {
+      this._setState({
+        dateTo: userDate.toISOString(),
+      });
+    }
+  };
+
+  #setFromDatePicker() {
+    this.#fromDatepicker = flatpickr(
+      this.element.querySelector('#event-start-time-1'),
+      {
+        enableTime: true,
+        dateFormat: 'd/m/y H:i',
+        defaultDate: humanizePointEditorDueDate(this._state.dateFrom),
+        onChange: this.#fromDateChangeHandler,
+      },
+    );
+  }
+
+  #setToDatePicker() {
+    this.#toDatepicker = flatpickr(
+      this.element.querySelector('#event-end-time-1'),
+      {
+        enableTime: true,
+        dateFormat: 'd/m/y H:i',
+        defaultDate: humanizePointEditorDueDate(this._state.dateTo),
+        minDate: humanizePointEditorDueDate(this._state.dateFrom),
+        onChange: this.#toDateChangeHandler,
+      },
+    );
+  }
+
   #setInnerHandlers = () => {
     this.element.querySelector('.event__type-group')
       .addEventListener('change', this.#typeChangedHandler);
@@ -215,6 +275,8 @@ export default class TripPointEditView extends AbstractStatefulView {
       this.element.querySelector('.event__available-offers')
         .addEventListener('change', this.#offersChangedHandler);
     }
+    this.#setFromDatePicker();
+    this.#setToDatePicker();
   };
 
   static parsePointToState = (point) => ({...point,
