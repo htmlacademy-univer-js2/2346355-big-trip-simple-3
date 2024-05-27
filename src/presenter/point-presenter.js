@@ -1,6 +1,8 @@
 import TripPointView from '../view/trip-point-view.js';
 import TripPointEditView from '../view/trip-point-edit-view.js';
 import { remove, render, replace } from '../framework/render.js';
+import {UserAction, UpdateType} from '../const.js';
+import { isDatesEqual } from '../utils/point.js';
 
 const Mode = {
   DEFAULT: 'DEFAULT',
@@ -33,6 +35,7 @@ export default class PointPresenter {
 
     this.#pointEditComponent.setFormSubmitHandler(this.#handleFormSubmit);
     this.#pointEditComponent.setCloseClickHandler(this.#closeFormWithoutSave);
+    this.#pointEditComponent.setDeleteClickHandler(this.#handleDeleteClick);
     this.#pointComponent.setClickOpenEditorHandler(this.#replaceCardToForm);
 
     if (prevPointComponent === null || prevPointEditComponent === null) {
@@ -83,8 +86,21 @@ export default class PointPresenter {
   };
 
   #handleFormSubmit = (point) => {
-    this.#changeData(point);
+    const isMinorUpdate = !isDatesEqual(this.#point.dateFrom, point.dateFrom) || this.#point.basePrice !== point.basePrice;
+    this.#changeData(
+      UserAction.UPDATE_POINT,
+      isMinorUpdate ? UpdateType.MINOR : UpdateType.PATCH,
+      point,
+    );
     this.#replaceFormToCard();
+  };
+
+  #handleDeleteClick = (point) => {
+    this.#changeData(
+      UserAction.DELETE_POINT,
+      UpdateType.MINOR,
+      point,
+    );
   };
 
   #closeFormWithoutSave = () => {
