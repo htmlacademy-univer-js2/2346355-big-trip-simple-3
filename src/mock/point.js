@@ -1,4 +1,4 @@
-import { getRadomNumber } from '../utils.js';
+import { getRadomNumber } from '../utils/utils.js';
 
 
 export const generatePoint = () => ({
