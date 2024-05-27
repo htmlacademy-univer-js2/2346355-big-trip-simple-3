@@ -6,5 +6,8 @@ const getDateForDateTimeWithoutTime = (dueData) => dayjs(dueData).format('YYYY-M
 const getDateForDateTimeWithTime = (dueData) => dayjs(dueData).format('YYYY-MM-DDTHH:mm');
 const getTimeFromDateTime = (data) => data.slice(-5);
 
+const sortPointDay = (pointA, pointB) => dayjs(pointA.dateFrom).diff(dayjs(pointB.dateFrom));
+const sortPointPrice = (pointA, pointB) => pointB.basePrice - pointA.basePrice;
+
 export { humanizePointEditorDueDate, humanizePointDueDate, getDateForDateTimeWithoutTime,
-  getDateForDateTimeWithTime, getTimeFromDateTime };
+  getDateForDateTimeWithTime, getTimeFromDateTime, sortPointDay, sortPointPrice };
