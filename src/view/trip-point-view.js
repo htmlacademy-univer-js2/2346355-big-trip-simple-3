@@ -1,6 +1,6 @@
-import { createElement } from '../render.js';
+import AbstractView from '../framework/view/abstract-view.js';
 import { humanizePointDueDate, getDateForDateTimeWithoutTime,
-  getDateForDateTimeWithTime, getTimeFromDateTime } from '../utils.js';
+  getDateForDateTimeWithTime, getTimeFromDateTime } from '../utils/point.js';
 import { generateOffer } from '../mock/offer.js';
 import { generateDestination } from '../mock/destination.js';
 
@@ -51,27 +51,25 @@ const createTripPointTemplate = (point) => {
   </li>`);
 };
 
-export default class TripPointView {
+export default class TripPointView extends AbstractView {
   #point = null;
-  #element = null;
 
   constructor(point) {
+    super();
     this.#point = point;
   }
 
-  get #template() {
+  get template() {
     return createTripPointTemplate(this.#point);
   }
 
-  get element() {
-    if (!this.#element) {
-      this.#element = createElement(this.#template);
-    }
+  setClickOpenEditorHandler = (callback) => {
+    this._callback.clickOpenEditor = callback;
+    this.element.querySelector('.event__rollup-btn').addEventListener('click', this.#clickOpenEditor);
+  };
 
-    return this.#element;
-  }
-
-  removeElement() {
-    this.#element = null;
-  }
+  #clickOpenEditor = (evt) => {
+    evt.preventDefault();
+    this._callback.clickOpenEditor();
+  };
 }
