@@ -61,5 +61,6 @@ export default class PointListPresenter {
     tripEditPointComponent.setCloseClickHandler(closeTripPointEditor);
 
     render(tripPointComponent, this.#pointListComponent.element);
+    // Все моки уже седлал, какие нужны
   };
 }
