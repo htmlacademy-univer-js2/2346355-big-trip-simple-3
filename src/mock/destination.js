@@ -1,4 +1,4 @@
-export const generateDestination = () => (
+const generateDestinations = () => [
   {
     id: 1,
     description: 'Chamonix, is a beautiful city, a true asian pearl, with crowded streets.',
@@ -10,4 +10,22 @@ export const generateDestination = () => (
       }
     ]
   }
-);
+];
+
+let destinations = null;
+
+const getDestination = (id) => {
+  if (!id) {
+    return null;
+  }
+  if (!destinations) {
+    destinations = generateDestinations();
+  }
+  for (const destination of destinations) {
+    if (destination.id === id) {
+      return destination;
+    }
+  }
+};
+
+export {getDestination};

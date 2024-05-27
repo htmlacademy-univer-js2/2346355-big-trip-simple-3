@@ -1,8 +1,7 @@
 import TripListView from '../view/trip-list-view';
-// import TripPointCreatorView from '../view/trip-point-creator-view';
 import SortView from '../view/sort-view.js';
 import { render } from '../framework/render.js';
-import EmptyListView from '../view/trip-list-empty-view';
+import EmptyListView from '../view/trip-list-empty-view.js';
 import PointPresenter from './point-presenter.js';
 import { updateItem } from '../utils/utils.js';
 import { SortType } from '../const';
