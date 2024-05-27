@@ -1,6 +1,6 @@
 import AbstractStatefulView from '../framework/view/abstract-stateful-view.js';
 import { POINT_TYPES } from '../const.js';
-import { humanizePointEditorDueDate } from '../utils/point.js';
+import { humanizePointEditorDueDate, isFutureThen } from '../utils/point.js';
 import { generateOffer } from '../mock/offer.js';
 import { getDestination } from '../mock/destination.js';
 import flatpickr from 'flatpickr';
@@ -11,9 +11,9 @@ const BLANK_POINT = {
   basePrice: 0,
   dateFrom: Date(),
   dateTo: Date(),
-  destination: null,
-  offers: null,
-  type: 'bus'
+  destination: null, // TODO: Заменить null на какой-то дестинейшен
+  offers: [],
+  type: 'bus',
 };
 
 const toUpperCaseFirstSymbol = (str) => str.replace(/^\w/, (match) => match.toUpperCase());
@@ -155,8 +155,11 @@ export default class TripPointEditView extends AbstractStatefulView {
 
   _restoreHandlers = () => {
     this.#setInnerHandlers();
-    this.setCloseClickHandler(this._callback.closeClick);
+    if (!this._state.isNewPoint){
+      this.setCloseClickHandler(this._callback.closeClick);
+    }
     this.setFormSubmitHandler(this._callback.formSubmit);
+    this.setDeleteClickHandler(this._callback.deleteClick);
   };
 
   setFormSubmitHandler = (callback) => {
@@ -167,6 +170,16 @@ export default class TripPointEditView extends AbstractStatefulView {
   setCloseClickHandler = (callback) => {
     this._callback.closeClick = callback;
     this.element.querySelector('.event__rollup-btn').addEventListener('click', this.#closeClickHandler);
+  };
+
+  setDeleteClickHandler = (callback) => {
+    this._callback.deleteClick = callback;
+    this.element.querySelector('.event__reset-btn').addEventListener('click', this.#deleteClickHandler);
+  };
+
+  #deleteClickHandler = (evt) => {
+    evt.preventDefault();
+    this._callback.deleteClick(TripPointEditView.parseStateToPoint(this._state));
   };
 
   #typeChangedHandler = (evt) => {
@@ -226,6 +239,12 @@ export default class TripPointEditView extends AbstractStatefulView {
       this._setState({
         dateFrom: userDate.toISOString(),
       });
+      if (isFutureThen(this._state.dateFrom, this._state.dateTo)) {
+        this._setState({
+          dateTo: userDate.toISOString(),
+        });
+        this.#toDatepicker.setDate(this._state.dateFrom);
+      }
       this.#toDatepicker.set('minDate', userDate);
     }
   };
@@ -270,7 +289,7 @@ export default class TripPointEditView extends AbstractStatefulView {
     this.element.querySelector('.event__input--destination')
       .addEventListener('change', this.#destinationChangedHandler);
     this.element.querySelector('.event__input--price')
-      .addEventListener('change', this.#basedPriceChangeHandler);
+      .addEventListener('input', this.#basedPriceChangeHandler);
     if (this._state.isOffers) {
       this.element.querySelector('.event__available-offers')
         .addEventListener('change', this.#offersChangedHandler);
