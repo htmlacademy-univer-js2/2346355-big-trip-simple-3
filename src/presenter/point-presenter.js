@@ -1,5 +1,5 @@
-import TripPointView from '../view/trip-point-view';
-import TripPointEditorView from '../view/trip-point-editor-view';
+import TripPointView from '../view/trip-point-view.js';
+import TripPointEditView from '../view/trip-point-edit-view.js';
 import { remove, render, replace } from '../framework/render.js';
 
 const Mode = {
@@ -24,13 +24,17 @@ export default class PointPresenter {
 
   init = (point) => {
     this.#point = point;
+
     const prevPointComponent = this.#pointComponent;
     const prevPointEditComponent = this.#pointEditComponent;
+
     this.#pointComponent = new TripPointView(point);
-    this.#pointEditComponent = new TripPointEditorView(point);
+    this.#pointEditComponent = new TripPointEditView(point);
+
     this.#pointEditComponent.setFormSubmitHandler(this.#handleFormSubmit);
-    this.#pointEditComponent.setCloseClickHandler(this.#closeTripPointEditor);
-    this.#pointComponent.setClickOpenEditorHandler(this.#openTripPointEditor);
+    this.#pointEditComponent.setCloseClickHandler(this.#closeFormWithoutSave);
+    this.#pointComponent.setClickOpenEditorHandler(this.#replaceCardToForm);
+
     if (prevPointComponent === null || prevPointEditComponent === null) {
       render(this.#pointComponent, this.#pointListContainer);
       return;
@@ -41,6 +45,7 @@ export default class PointPresenter {
     if (this.#mode === Mode.EDITING) {
       replace(this.#pointEditComponent, prevPointEditComponent);
     }
+
     remove(prevPointComponent);
     remove(prevPointEditComponent);
   };
@@ -50,35 +55,40 @@ export default class PointPresenter {
     remove(this.#pointEditComponent);
   };
 
-  #onEscKeyDown = (evt) => {
-    if (evt.key === 'Escape' || evt.key === 'Esc') {
-      evt.preventDefault();
-      replace(this.#pointComponent, this.#pointEditComponent);
-      document.removeEventListener('keydown', this.#onEscKeyDown);
+  resetView = () => {
+    if (this.#mode !== Mode.DEFAULT) {
+      this.#pointEditComponent.reset(this.#point);
+      this.#replaceFormToCard();
     }
   };
 
-  #openTripPointEditor = () => {
+  #replaceCardToForm = () => {
     replace(this.#pointEditComponent, this.#pointComponent);
-    document.addEventListener('keydown', this.#onEscKeyDown);
+    document.addEventListener('keydown', this.#escKeyDownHandler);
     this.#changeMode();
     this.#mode = Mode.EDITING;
   };
 
-  #closeTripPointEditor = () => {
+  #replaceFormToCard = () => {
     replace(this.#pointComponent, this.#pointEditComponent);
-    document.removeEventListener('keydown', this.#onEscKeyDown);
+    document.removeEventListener('keydown', this.#escKeyDownHandler);
     this.#mode = Mode.DEFAULT;
   };
 
-  #handleFormSubmit = () => {
-    this.#changeData(this.#point);
-    this.#closeTripPointEditor();
+  #escKeyDownHandler = (evt) => {
+    if (evt.key === 'Escape' || evt.key === 'Esc') {
+      evt.preventDefault();
+      this.#closeFormWithoutSave();
+    }
   };
 
-  resetView = () => {
-    if (this.#mode !== Mode.DEFAULT) {
-      this.#closeTripPointEditor();
-    }
+  #handleFormSubmit = (point) => {
+    this.#changeData(point);
+    this.#replaceFormToCard();
+  };
+
+  #closeFormWithoutSave = () => {
+    this.#pointEditComponent.reset(this.#point);
+    this.#replaceFormToCard();
   };
 }

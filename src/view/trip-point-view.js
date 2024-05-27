@@ -2,7 +2,7 @@ import AbstractView from '../framework/view/abstract-view.js';
 import { humanizePointDueDate, getDateForDateTimeWithoutTime,
   getDateForDateTimeWithTime, getTimeFromDateTime } from '../utils/point.js';
 import { generateOffer } from '../mock/offer.js';
-import { generateDestination } from '../mock/destination.js';
+import { getDestination } from '../mock/destination.js';
 
 const createOffersTemplate = (offers) => offers.map((offer) => `
     <li class="event__offer">
@@ -27,7 +27,7 @@ const createTripPointTemplate = (point) => {
     <div class="event__type">
       <img class="event__type-icon" width="42" height="42" src="img/icons/${type}.png" alt="Event type icon">
     </div>
-    <h3 class="event__title">${type} ${generateDestination(destination).name}</h3>
+    <h3 class="event__title">${type} ${getDestination(destination).name}</h3>
     <div class="event__schedule">
       <p class="event__time">
         <time class="event__start-time" datetime="${dateForDateTimeWithStartTime}">${dateForDateTimeStartTime}</time>
