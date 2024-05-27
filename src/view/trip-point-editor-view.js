@@ -14,7 +14,7 @@ const generateEventTypeGroup = (type) => POINT_TYPES.map((typeNow)=>
 
 const generateOffersGroup = (offers) => generateOffer().map((offerNow) => `
   <div class="event__offer-selector">
-    <input class="event__offer-checkbox  visually-hidden" id="event-offer-${offerNow.title.replace(' ', '-')}-1" type="checkbox" name="event-offer-${offerNow.title.replace(' ', '-')}" ${offers.includes(offerNow) ? 'checked' : ''}>
+    <input class="event__offer-checkbox  visually-hidden" id="event-offer-${offerNow.title.replace(' ', '-')}-1" type="checkbox" name="event-offer-${offerNow.title.replace(' ', '-')}" ${offers.includes(offerNow.id) ? 'checked' : ''}>
     <label class="event__offer-label" for="event-offer-${offerNow.title.replace(' ', '-')}-1">
       <span class="event__offer-title">${offerNow.title}</span>
       &plus;&euro;&nbsp;
