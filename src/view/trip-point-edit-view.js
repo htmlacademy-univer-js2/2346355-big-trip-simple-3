@@ -1,8 +1,6 @@
 import AbstractStatefulView from '../framework/view/abstract-stateful-view.js';
 import { POINT_TYPES } from '../const.js';
-import { humanizePointEditorDueDate, isFutureThen } from '../utils/point.js';
-import { generateOffer } from '../mock/offer.js';
-import { getDestination } from '../mock/destination.js';
+import { humanizePointEditorDueDate, isFutureThen, getDestination, getOffers } from '../utils/point.js';
 import flatpickr from 'flatpickr';
 
 import 'flatpickr/dist/flatpickr.min.css';
@@ -11,9 +9,10 @@ const BLANK_POINT = {
   basePrice: 0,
   dateFrom: Date(),
   dateTo: Date(),
-  destination: null, // TODO: Заменить null на какой-то дестинейшен
+  destination: [], // TODO: Заменить null на какой-то дестинейшен
   offers: [],
   type: 'bus',
+  id: 0
 };
 
 const toUpperCaseFirstSymbol = (str) => str.replace(/^\w/, (match) => match.toUpperCase());
@@ -24,9 +23,9 @@ const generateEventTypeGroup = (type) => POINT_TYPES.map((typeNow)=>
     <label class="event__type-label  event__type-label--${typeNow}" for="event-type-${typeNow}-1">${toUpperCaseFirstSymbol(typeNow)}</label>
   </div>`).join('');
 
-const generateOffersGroup = (offers) => generateOffer().map((offerNow) => `
+const generateOffersGroup = (offers, allOffers) => allOffers.offers.map((offerNow) => `
   <div class="event__offer-selector">
-    <input class="event__offer-checkbox  visually-hidden" id="event-offer-${offerNow.title.replace(' ', '-')}-1" data-offer-id="${offerNow.id}" type="checkbox" name="event-offer-${offerNow.title.replace(' ', '-')}" ${offers.includes(offerNow.id) ? 'checked' : ''}>
+    <input class="event__offer-checkbox  visually-hidden" id="event-offer-${offerNow.title.replace(' ', '-')}-1" data-offer-id="${offerNow.id}" type="checkbox" name="event-offer-${offerNow.title.replace(' ', '-')}" ${offers && offers.includes(offerNow.id) ? 'checked' : ''}>
     <label class="event__offer-label" for="event-offer-${offerNow.title.replace(' ', '-')}-1">
       <span class="event__offer-title">${offerNow.title}</span>
       &plus;&euro;&nbsp;
@@ -35,12 +34,12 @@ const generateOffersGroup = (offers) => generateOffer().map((offerNow) => `
   </div>
 `).join('');
 
-const generateOfferSection = (offers) => `
+const generateOfferSection = (offers, allOffers) => `
 <section class="event__section  event__section--offers">
 <h3 class="event__section-title  event__section-title--offers">Offers</h3>
 
 <div class="event__available-offers">
-  ${generateOffersGroup(offers)}
+  ${generateOffersGroup(offers, allOffers)}
 </div>
 </section>
 `;
@@ -61,9 +60,15 @@ const generateDestinationSection = (destination) => `
   </div>
 </section>`;
 
-const createTripPointEditorTemplate = (point) => {
+const createDestinationList = (destinations) => (destinations
+  .map((destination) => `
+    <option value="${destination.name}"></option>`)
+  .join(''));
+
+const createTripPointEditorTemplate = (point, allOffers, allDestinations) => {
   const { basePrice, dateFrom, dateTo, offers, type, destination, isOffers, isDestination, isNewPoint } = point;
-  const destinationInfo = getDestination(destination);
+  const destinationInfo = getDestination(destination, allDestinations); // Получение Destination по id
+  const offersInfo = getOffers(type, allOffers);
   return `<li class="trip-events__item">
   <form class="event event--edit" action="#" method="post">
     <header class="event__header">
@@ -88,9 +93,7 @@ const createTripPointEditorTemplate = (point) => {
         </label>
         <input class="event__input  event__input--destination" id="event-destination-1" type="text" name="event-destination" autocomplete="off" value="${destinationInfo ? destinationInfo.name : ''}" list="destination-list-1">
         <datalist id="destination-list-1">
-          <option value="Amsterdam"></option>
-          <option value="Geneva"></option>
-          <option value="Chamonix"></option>
+          ${createDestinationList(allDestinations)}
         </datalist>
       </div>
 
@@ -114,7 +117,7 @@ const createTripPointEditorTemplate = (point) => {
       ${isNewPoint ? '<button class="event__reset-btn" type="reset">Cancel</button>' : '<button class="event__reset-btn" type="reset">Delete</button><button class="event__rollup-btn" type="button"><span class="visually-hidden">Open event</span></button>'}
     </header>
     <section class="event__details">
-      ${isOffers ? generateOfferSection(offers) : ''}
+      ${isOffers ? generateOfferSection(offers, offersInfo) : ''}
       ${isDestination ? generateDestinationSection(destinationInfo) : ''}
     </section>
   </form>
@@ -124,10 +127,20 @@ const createTripPointEditorTemplate = (point) => {
 export default class TripPointEditView extends AbstractStatefulView {
   #fromDatepicker = null;
   #toDatepicker = null;
+  #destinations = null;
+  #offers = null;
 
-  constructor(point = BLANK_POINT) {
+  constructor(offers, destinations, point = BLANK_POINT) {
     super();
-    this._state = TripPointEditView.parsePointToState(point);
+    this.#offers = offers;
+    this.#destinations = destinations;
+    if (point === BLANK_POINT) {
+      point = {
+        ...point,
+        destination: destinations[0].id,
+      };
+    }
+    this._state = TripPointEditView.parsePointToState(point, this.#offers);
     this.#setInnerHandlers();
   }
 
@@ -144,12 +157,12 @@ export default class TripPointEditView extends AbstractStatefulView {
   }
 
   get template() {
-    return createTripPointEditorTemplate(this._state);
+    return createTripPointEditorTemplate(this._state, this.#offers, this.#destinations);
   }
 
   reset = (point) => {
     this.updateElement(
-      TripPointEditView.parsePointToState(point)
+      TripPointEditView.parsePointToState(point, this.#offers)
     );
   };
 
@@ -184,11 +197,10 @@ export default class TripPointEditView extends AbstractStatefulView {
 
   #typeChangedHandler = (evt) => {
     evt.preventDefault();
-    // TODO: Проверка что офер существует
-    const newOffers = true;
     this.updateElement({
       type: evt.target.value,
-      isOffers: newOffers,
+      offers: [],
+      isOffers: this.#offers.find((el) => el.type === evt.target.value).offers.length > 0,
     });
   };
 
@@ -215,12 +227,14 @@ export default class TripPointEditView extends AbstractStatefulView {
 
   #destinationChangedHandler = (evt) => {
     evt.preventDefault();
-    // TODO: Проверка что destination существует
+    const newDest = this.#destinations.find((destination) => destination.name === evt.target.value);
+    if (!newDest) {
+      return;
+    }
     const newDestination = true;
-    const destinationNumber = 1;
     this.updateElement({
       isDestination: newDestination,
-      destination: destinationNumber
+      destination: newDest
     });
   };
 
@@ -298,8 +312,8 @@ export default class TripPointEditView extends AbstractStatefulView {
     this.#setToDatePicker();
   };
 
-  static parsePointToState = (point) => ({...point,
-    isOffers: point.offers !== null,
+  static parsePointToState = (point, offers) => ({...point,
+    isOffers: offers.find((el) => el.type === point.type).offers.length > 0,
     isDestination: point.destination !== null,
     isNewPoint: point === BLANK_POINT
   });

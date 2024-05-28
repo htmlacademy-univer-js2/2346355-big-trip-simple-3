@@ -12,5 +12,24 @@ const sortPointPrice = (pointA, pointB) => pointB.basePrice - pointA.basePrice;
 const isDatesEqual = (dateA, dateB) => (!dateA && !dateB) || dayjs(dateA).isSame(dateB, 'D');
 const isFutureThen = (dateA, dateB) => dayjs(dateA).isAfter(dayjs(dateB));
 
+const getDestination = (id, destinations) => {
+  for (const destination of destinations) {
+    if (destination.id === id) {
+      return destination;
+    }
+  }
+  return null;
+};
+
+const getOffers = (type, offers) => {
+  for (const offer of offers) {
+    if (offer.type === type) {
+      return offer;
+    }
+  }
+  return null;
+};
+
+
 export { humanizePointEditorDueDate, humanizePointDueDate, getDateForDateTimeWithoutTime,
-  getDateForDateTimeWithTime, getTimeFromDateTime, sortPointDay, sortPointPrice, isDatesEqual, isFuture, isFutureThen };
+  getDateForDateTimeWithTime, getTimeFromDateTime, sortPointDay, sortPointPrice, isDatesEqual, isFuture, isFutureThen, getDestination, getOffers };
